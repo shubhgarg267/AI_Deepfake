@@ -1,0 +1,21 @@
+# Pinned to exact versions actually installed and verified working in this
+# environment (Windows/CPU, Python 3.12) rather than loose ranges, so a
+# future `pip install -r requirements.txt` can't silently re-shift these.
+#
+# torch/torchvision/numpy/Pillow are pinned BELOW their latest releases
+# because facenet-pytorch==2.6.0 hard-requires:
+#   numpy <2.0.0, torch <2.3.0/>=2.2.0, torchvision <0.18.0/>=0.17.0,
+#   Pillow <10.3.0/>=10.2.0
+# Installing facenet-pytorch silently downgraded torch 2.4.1->2.2.2 and
+# numpy 2.x->1.26.4 in this environment; pinning here makes that explicit
+# instead of letting it happen again unnoticed on a future install.
+torch==2.2.2
+torchvision==0.17.2
+numpy==1.26.4
+Pillow==10.2.0
+opencv-python==5.0.0.93
+facenet-pytorch==2.6.0
+PyYAML==6.0.3
+
+# dataset acquisition (Kaggle API), not a training-time dependency
+kaggle==2.2.4
