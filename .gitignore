@@ -1,0 +1,25 @@
+# data
+data/raw/
+data/interim/
+data/processed/
+
+# results
+results/checkpoints/
+results/logs/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# notebooks
+.ipynb_checkpoints/
+
+# os
+.DS_Store
+Thumbs.db
+
+# env
+.env
