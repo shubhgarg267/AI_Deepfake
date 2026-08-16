@@ -67,8 +67,12 @@ Sources:
   +frequency vs. +temporal vs. full three-stream — measured in accuracy/F1/AUC on a
   held-out set; per-stream embedding analysis (e.g. do frequency-stream activations
   separate real/fake even when spatial-stream activations don't, at high compression).
-- **Status**: not started. Only `src/models/{spatial,frequency,temporal}/` folders
-  exist; no code.
+- **Status**: smoke-tested, verified end-to-end on real data (50-video DFD
+  subset, 40/10 train/val split). Each of the three streams trains, produces
+  finite loss, and its checkpoint saves/reloads correctly. This is pipeline
+  correctness verification on a tiny, deliberately-overfit split — **not**
+  production-trained or validated, and carries no claim about accuracy or
+  generalization.
 
 ### 2. Attention-based fusion across streams
 
@@ -85,7 +89,21 @@ Sources:
   across compression levels to check the hypothesis that frequency-stream weight
   should increase as compression increases (this is the interpretability story that
   ties directly to the base paper's compression-aware framing).
-- **Status**: not started. `src/models/fusion/` folder exists; no code.
+- **Status**: smoke-tested, verified end-to-end on real data (50-video DFD
+  subset, 40/10 train/val split) — both the softmax-gating attention fusion
+  and a matched-capacity (~100K param) naive-concatenation baseline trained
+  cleanly and their checkpoints save/reload. Not production-trained or
+  validated. See result note immediately below.
+- **Smoke-test result (2026-08-16)**: on this 50-video subset, attention and
+  concat fusion both reached 100% train accuracy at the same epoch (2), but
+  their train-loss trajectories diverged — concat converged faster through
+  epochs 1–4 (e.g. epoch 3: concat 0.293 vs. attention 0.344), while attention
+  ended lower by epoch 5 (0.110 vs. concat's 0.146). Val accuracy for both sat
+  at 50–60%, statistically indistinguishable at only 10 val videos. **This is
+  evidence the two fusion mechanisms behave differently from each other, not
+  evidence attention is better** — it's one run, one seed, 40 training
+  examples. Worth re-checking once there's a real dataset and multiple seeds
+  behind the comparison; not a result to cite as-is.
 
 ### 3. Degradation-aware augmentation strategy
 
@@ -137,14 +155,17 @@ Sources:
 | Repo/folder scaffolding | done |
 | `docs/architecture.md` | done (draft) |
 | `docs/contribution-notes.md` | done (draft, this file) |
-| DFDC sample subset download | not started |
-| Face detection/cropping pipeline | not started |
-| Spatial stream | not started |
-| Frequency stream | not started |
-| Temporal stream | not started |
-| Attention fusion module | not started |
+| Local dataset subset (50-video DFD, see `docs/dataset.md`) | done — note: plan originally scoped DFDC, actually used DFD after access friction, see `docs/dataset.md` |
+| Face detection/cropping pipeline | done — smoke-tested, 97% detection success rate |
+| Spatial stream | smoke-tested, verified end-to-end on real data — not production-trained |
+| Frequency stream | smoke-tested, verified end-to-end on real data — not production-trained |
+| Temporal stream | smoke-tested, verified end-to-end on real data — not production-trained |
+| Attention fusion module | smoke-tested (both attention and concat-baseline variants) — not production-trained |
 | Degradation-aware augmentation | not started |
 | Cross-dataset (Celeb-DF-v2) eval | not started |
 
-Everything beyond folder scaffolding and these two docs is **not started**. This table
-should be updated honestly as each piece actually lands — not marked "done" on intent.
+"Smoke-tested" means: real data flows through the component end-to-end, loss
+decreases, checkpoints save/reload correctly — pipeline-correctness verification
+on a tiny (50-video) overfit-prone split. It is **not** a claim of accuracy,
+generalization, or GPU-scale training. This table should keep being updated
+honestly as each piece actually changes state — not marked "done" on intent.
