@@ -17,5 +17,14 @@ opencv-python==5.0.0.93
 facenet-pytorch==2.6.0
 PyYAML==6.0.3
 
+# degradation-aware augmentation: bundles a static ffmpeg binary (no system
+# install needed) for the H.264 CRF re-encoding degradation type.
+# scikit-image was tried for PSNR/SSIM but scikit-image==0.26.0 hard-requires
+# numpy>=2.0, which breaks facenet-pytorch's numpy<2.0.0 pin above -- dropped
+# in favor of hand-rolled PSNR/SSIM in src/features/degradation_augmentation.py
+# rather than deepen the numpy conflict further.
+imageio-ffmpeg==0.6.0
+imageio==2.37.4
+
 # dataset acquisition (Kaggle API), not a training-time dependency
 kaggle==2.2.4

@@ -20,11 +20,12 @@ def load_video_ids(split_csv):
 
 
 class SpatialFrameDataset(Dataset):
-    def __init__(self, manifest_csv, split_csv, crop_size=224):
+    def __init__(self, manifest_csv, split_csv, crop_size=224, augment=False):
         video_ids = load_video_ids(split_csv)
         with open(manifest_csv) as f:
             rows = list(csv.DictReader(f))
         self.rows = [r for r in rows if r["video_id"] in video_ids]
+        self.augment = augment
 
         self.transform = transforms.Compose(
             [
@@ -40,6 +41,9 @@ class SpatialFrameDataset(Dataset):
     def __getitem__(self, idx):
         row = self.rows[idx]
         img = Image.open(row["frame_path"]).convert("RGB")
+        if self.augment:
+            from src.features.degradation_augmentation import degrade
+            img, _ = degrade(img)
         img = self.transform(img)
         label = 1.0 if row["label"] == "FAKE" else 0.0
         return img, torch.tensor(label, dtype=torch.float32)

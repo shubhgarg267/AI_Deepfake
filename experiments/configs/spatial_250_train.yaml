@@ -1,0 +1,29 @@
+experiment: spatial_250_train
+
+data:
+  manifest: data/interim/manifest_spatial_250.csv
+  frames_per_video: 10
+  crop_size: 224
+  train_split: data/splits/spatial_250_train.csv   # 200 videos: 100 real + 100 fake -> 1955 frames
+  val_split: data/splits/spatial_250_val.csv        # 50 videos: 25 real + 25 fake  -> 483 frames
+  augment: true            # verified degradation-aware augmentation pipeline, train split only
+
+model:
+  backbone: resnet18
+  pretrained: true
+  freeze_backbone: false
+  num_classes: 1        # binary, sigmoid via BCEWithLogitsLoss
+
+train:
+  epochs: 10               # up from 5 (smoke test): more videos and augmentation variety to
+                            # exploit -- see time-estimate table for the epochs/time tradeoff
+  batch_size: 16
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/spatial_250_train/
+  log_dir: results/logs/spatial_250_train/

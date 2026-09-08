@@ -1,0 +1,28 @@
+experiment: spatial_baseline_augmented_smoke_test
+
+data:
+  manifest: data/interim/manifest_spatial_baseline.csv
+  frames_per_video: 10
+  crop_size: 224
+  train_split: data/splits/spatial_baseline_train.csv   # 40 videos: 20 real + 20 fake -> 389 frames
+  val_split: data/splits/spatial_baseline_val.csv        # 10 videos: 5 real + 5 fake  -> 96 frames
+  augment: true           # degradation-aware augmentation, train split only (val stays clean)
+
+model:
+  backbone: resnet18
+  pretrained: true
+  freeze_backbone: false
+  num_classes: 1        # binary, sigmoid via BCEWithLogitsLoss
+
+train:
+  epochs: 5
+  batch_size: 16
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/spatial_baseline_augmented_smoke_test/
+  log_dir: results/logs/spatial_baseline_augmented_smoke_test/

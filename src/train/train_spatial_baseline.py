@@ -63,11 +63,14 @@ def main():
     device = torch.device(cfg["train"]["device"])
 
     train_set = SpatialFrameDataset(
-        cfg["data"]["manifest"], cfg["data"]["train_split"], cfg["data"]["crop_size"]
+        cfg["data"]["manifest"],
+        cfg["data"]["train_split"],
+        cfg["data"]["crop_size"],
+        augment=cfg["data"].get("augment", False),
     )
     val_set = SpatialFrameDataset(
         cfg["data"]["manifest"], cfg["data"]["val_split"], cfg["data"]["crop_size"]
-    )
+    )  # val stays clean (no augment) for a fair comparison against the un-augmented run
     train_loader = DataLoader(
         train_set, batch_size=cfg["train"]["batch_size"], shuffle=True
     )
