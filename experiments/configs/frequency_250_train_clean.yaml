@@ -1,0 +1,24 @@
+experiment: frequency_250_train_clean
+
+data:
+  manifest: data/interim/manifest_frequency_250.csv
+  train_split: data/splits/spatial_250_train.csv   # identical split to the augmented run
+  val_split: data/splits/spatial_250_val.csv
+  augment: false            # ablation: isolate augmentation as the cause vs. from-scratch init
+
+model:
+  backbone: frequency_small_cnn
+  num_classes: 1
+
+train:
+  epochs: 10                # identical to frequency_250_train.yaml
+  batch_size: 16
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/frequency_250_train_clean/
+  log_dir: results/logs/frequency_250_train_clean/

@@ -50,11 +50,9 @@ def eval_spatial():
     return compute_all(labels, probs), len(labels)
 
 
-def eval_frequency():
+def eval_frequency(checkpoint="results/checkpoints/frequency_250_train/frequency_baseline_smoke_test.pt"):
     model = FrequencyCNN(num_classes=1)
-    state = torch.load(
-        "results/checkpoints/frequency_250_train/frequency_baseline_smoke_test.pt", map_location="cpu"
-    )
+    state = torch.load(checkpoint, map_location="cpu")
     model.load_state_dict(state)
     model.eval()
 
