@@ -1,9 +1,12 @@
 """Block-wise 2D DCT (8x8, JPEG-style) frequency feature extraction.
 
-Reads face crops from manifest_spatial_baseline.csv, writes log-magnitude
-DCT coefficient maps (float16, compressed) to data/interim/frequency/, plus
-a parallel manifest_frequency_baseline.csv.
+Defaults (smoke-test subset): reads face crops from manifest_spatial_baseline.csv,
+writes log-magnitude DCT coefficient maps (float16, compressed) to
+data/interim/frequency/, plus a parallel manifest_frequency_baseline.csv.
+
+Pass --manifest-in/--out-dir/--manifest-out to point at a different subset.
 """
+import argparse
 import csv
 import time
 from pathlib import Path
@@ -12,9 +15,6 @@ import numpy as np
 from PIL import Image
 
 BLOCK_SIZE = 8
-MANIFEST_IN = Path("data/interim/manifest_spatial_baseline.csv")
-OUT_DIR = Path("data/interim/frequency")
-MANIFEST_OUT = Path("data/interim/manifest_frequency_baseline.csv")
 
 
 def _dct_basis(n=BLOCK_SIZE):
@@ -52,6 +52,16 @@ def block_dct(gray_img):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest-in", default="data/interim/manifest_spatial_baseline.csv")
+    parser.add_argument("--out-dir", default="data/interim/frequency")
+    parser.add_argument("--manifest-out", default="data/interim/manifest_frequency_baseline.csv")
+    args = parser.parse_args()
+
+    MANIFEST_IN = Path(args.manifest_in)
+    OUT_DIR = Path(args.out_dir)
+    MANIFEST_OUT = Path(args.manifest_out)
+
     t_start = time.time()
 
     with open(MANIFEST_IN) as f:

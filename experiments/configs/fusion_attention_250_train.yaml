@@ -1,0 +1,27 @@
+experiment: fusion_attention_250_train
+
+data:
+  manifest: data/interim/manifest_fusion_250.csv
+  train_split: data/splits/spatial_250_train.csv
+  val_split: data/splits/spatial_250_val.csv
+
+model:
+  fusion_type: attention
+  spatial_dim: 512
+  freq_dim: 128
+  temporal_dim: 128
+  proj_dim: 128
+  num_classes: 1
+
+train:
+  epochs: 10
+  batch_size: 16
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/fusion_attention_250_train/
+  log_dir: results/logs/fusion_attention_250_train/

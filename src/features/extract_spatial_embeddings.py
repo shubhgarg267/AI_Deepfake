@@ -1,13 +1,16 @@
-"""Run the frozen spatial_baseline_smoke_test checkpoint over all face crops
-to produce per-video sequences of 512-d embeddings for the temporal stream.
+"""Run a frozen spatial checkpoint over all face crops to produce per-video
+sequences of 512-d embeddings for the temporal stream.
 
-Reads data/interim/manifest_spatial_baseline.csv, writes:
+Defaults (smoke-test subset): reads data/interim/manifest_spatial_baseline.csv,
+depends on results/checkpoints/spatial_baseline_smoke_test/spatial_baseline_smoke_test.pt
+(see docs/dataset.md for the staleness note), writes:
   - data/interim/spatial_embeddings/{video_id}.npy   (T, 512) float32
   - data/interim/manifest_temporal_baseline.csv       (video_id, embedding_path, label, num_frames)
 
-Depends on results/checkpoints/spatial_baseline_smoke_test/spatial_baseline_smoke_test.pt
-already existing (see docs/dataset.md for the staleness note).
+Pass --manifest-in/--checkpoint/--out-dir/--manifest-out to point at a
+different subset/checkpoint.
 """
+import argparse
 import csv
 import time
 from collections import defaultdict
@@ -19,11 +22,6 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 from torchvision.models import resnet18
-
-MANIFEST_IN = Path("data/interim/manifest_spatial_baseline.csv")
-CHECKPOINT = Path("results/checkpoints/spatial_baseline_smoke_test/spatial_baseline_smoke_test.pt")
-OUT_DIR = Path("data/interim/spatial_embeddings")
-MANIFEST_OUT = Path("data/interim/manifest_temporal_baseline.csv")
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
@@ -37,10 +35,10 @@ transform = transforms.Compose(
 )
 
 
-def load_frozen_encoder():
+def load_frozen_encoder(checkpoint):
     model = resnet18(weights=None)
     model.fc = nn.Linear(model.fc.in_features, 1)
-    state = torch.load(CHECKPOINT, map_location="cpu")
+    state = torch.load(checkpoint, map_location="cpu")
     model.load_state_dict(state)
     model.fc = nn.Identity()  # drop the classifier head, keep 512-d pooled features
     model.eval()
@@ -50,6 +48,20 @@ def load_frozen_encoder():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest-in", default="data/interim/manifest_spatial_baseline.csv")
+    parser.add_argument(
+        "--checkpoint",
+        default="results/checkpoints/spatial_baseline_smoke_test/spatial_baseline_smoke_test.pt",
+    )
+    parser.add_argument("--out-dir", default="data/interim/spatial_embeddings")
+    parser.add_argument("--manifest-out", default="data/interim/manifest_temporal_baseline.csv")
+    args = parser.parse_args()
+
+    MANIFEST_IN = Path(args.manifest_in)
+    OUT_DIR = Path(args.out_dir)
+    MANIFEST_OUT = Path(args.manifest_out)
+
     t_start = time.time()
 
     with open(MANIFEST_IN) as f:
@@ -61,7 +73,7 @@ def main():
     for vid in by_video:
         by_video[vid].sort(key=lambda r: r["frame_path"])  # zero-padded frame idx -> correct temporal order
 
-    model = load_frozen_encoder()
+    model = load_frozen_encoder(args.checkpoint)
 
     out_rows = []
     with torch.no_grad():

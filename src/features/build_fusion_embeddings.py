@@ -1,13 +1,16 @@
 """Combine the three frozen streams into one video-level embedding triple each:
   - spatial:  mean-pool the (T,512) spatial_embeddings sequence -> (512,)
   - frequency: mean-pool the (T,128) frequency_embeddings sequence -> (128,)
-  - temporal: frozen temporal_baseline_smoke_test.pt's clip embedding -> (128,)
+  - temporal: frozen temporal checkpoint's clip embedding -> (128,)
 
-Reads data/interim/manifest_temporal_baseline.csv (video_id/label list),
-writes:
+Defaults (smoke-test subset): reads data/interim/manifest_temporal_baseline.csv, writes:
   - data/interim/fusion_embeddings/{video_id}.npz  (spatial, frequency, temporal)
   - data/interim/manifest_fusion_baseline.csv       (video_id, embedding_path, label)
+
+Pass --temporal-manifest/--spatial-emb-dir/--freq-emb-dir/--temporal-checkpoint/
+--out-dir/--manifest-out for a different subset/checkpoints.
 """
+import argparse
 import csv
 import time
 from pathlib import Path
@@ -19,17 +22,10 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from src.models.temporal.bilstm import TemporalBiLSTM
 
-TEMPORAL_MANIFEST = Path("data/interim/manifest_temporal_baseline.csv")
-SPATIAL_EMB_DIR = Path("data/interim/spatial_embeddings")
-FREQ_EMB_DIR = Path("data/interim/frequency_embeddings")
-TEMPORAL_CHECKPOINT = Path("results/checkpoints/temporal_baseline_smoke_test/temporal_baseline_smoke_test.pt")
-OUT_DIR = Path("data/interim/fusion_embeddings")
-MANIFEST_OUT = Path("data/interim/manifest_fusion_baseline.csv")
 
-
-def load_frozen_temporal():
+def load_frozen_temporal(checkpoint):
     model = TemporalBiLSTM(input_size=512, hidden_size=64, num_classes=1)
-    state = torch.load(TEMPORAL_CHECKPOINT, map_location="cpu")
+    state = torch.load(checkpoint, map_location="cpu")
     model.load_state_dict(state)
     model.eval()
     for p in model.parameters():
@@ -38,12 +34,30 @@ def load_frozen_temporal():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--temporal-manifest", default="data/interim/manifest_temporal_baseline.csv")
+    parser.add_argument("--spatial-emb-dir", default="data/interim/spatial_embeddings")
+    parser.add_argument("--freq-emb-dir", default="data/interim/frequency_embeddings")
+    parser.add_argument(
+        "--temporal-checkpoint",
+        default="results/checkpoints/temporal_baseline_smoke_test/temporal_baseline_smoke_test.pt",
+    )
+    parser.add_argument("--out-dir", default="data/interim/fusion_embeddings")
+    parser.add_argument("--manifest-out", default="data/interim/manifest_fusion_baseline.csv")
+    args = parser.parse_args()
+
+    TEMPORAL_MANIFEST = Path(args.temporal_manifest)
+    SPATIAL_EMB_DIR = Path(args.spatial_emb_dir)
+    FREQ_EMB_DIR = Path(args.freq_emb_dir)
+    OUT_DIR = Path(args.out_dir)
+    MANIFEST_OUT = Path(args.manifest_out)
+
     t_start = time.time()
 
     with open(TEMPORAL_MANIFEST) as f:
         rows = list(csv.DictReader(f))
 
-    temporal_model = load_frozen_temporal()
+    temporal_model = load_frozen_temporal(args.temporal_checkpoint)
 
     out_rows = []
     with torch.no_grad():

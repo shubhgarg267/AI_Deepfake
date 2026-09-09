@@ -1,0 +1,25 @@
+experiment: frequency_250_train
+
+data:
+  manifest: data/interim/manifest_frequency_250.csv
+  train_split: data/splits/spatial_250_train.csv   # same 200/50 split as spatial
+  val_split: data/splits/spatial_250_val.csv
+  augment: true
+  frames_dir: data/interim/frames_250              # raw crops, needed to recompute DCT on augmented frames
+
+model:
+  backbone: frequency_small_cnn
+  num_classes: 1
+
+train:
+  epochs: 10               # matches spatial_250_train's reasoning: more data + augmentation variety
+  batch_size: 16
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/frequency_250_train/
+  log_dir: results/logs/frequency_250_train/

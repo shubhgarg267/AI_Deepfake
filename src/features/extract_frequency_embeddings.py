@@ -1,10 +1,13 @@
-"""Run the frozen frequency_baseline_smoke_test checkpoint over all DCT maps
-to produce per-video sequences of 128-d embeddings (mirrors extract_spatial_embeddings.py).
+"""Run a frozen frequency checkpoint over all DCT maps to produce per-video
+sequences of 128-d embeddings (mirrors extract_spatial_embeddings.py).
 
-Reads data/interim/manifest_frequency_baseline.csv, writes:
+Defaults (smoke-test subset): reads data/interim/manifest_frequency_baseline.csv, writes:
   - data/interim/frequency_embeddings/{video_id}.npy  (T, 128) float32
   - data/interim/manifest_frequency_embeddings.csv     (video_id, embedding_path, label, num_frames)
+
+Pass --manifest-in/--checkpoint/--out-dir/--manifest-out for a different subset/checkpoint.
 """
+import argparse
 import csv
 import time
 from collections import defaultdict
@@ -17,15 +20,10 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from src.models.frequency.small_cnn import FrequencyCNN
 
-MANIFEST_IN = Path("data/interim/manifest_frequency_baseline.csv")
-CHECKPOINT = Path("results/checkpoints/frequency_baseline_smoke_test/frequency_baseline_smoke_test.pt")
-OUT_DIR = Path("data/interim/frequency_embeddings")
-MANIFEST_OUT = Path("data/interim/manifest_frequency_embeddings.csv")
 
-
-def load_frozen_encoder():
+def load_frozen_encoder(checkpoint):
     model = FrequencyCNN(num_classes=1)
-    state = torch.load(CHECKPOINT, map_location="cpu")
+    state = torch.load(checkpoint, map_location="cpu")
     model.load_state_dict(state)
     model.classifier = torch.nn.Identity()  # drop the classifier head, keep 128-d features
     model.eval()
@@ -35,6 +33,20 @@ def load_frozen_encoder():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest-in", default="data/interim/manifest_frequency_baseline.csv")
+    parser.add_argument(
+        "--checkpoint",
+        default="results/checkpoints/frequency_baseline_smoke_test/frequency_baseline_smoke_test.pt",
+    )
+    parser.add_argument("--out-dir", default="data/interim/frequency_embeddings")
+    parser.add_argument("--manifest-out", default="data/interim/manifest_frequency_embeddings.csv")
+    args = parser.parse_args()
+
+    MANIFEST_IN = Path(args.manifest_in)
+    OUT_DIR = Path(args.out_dir)
+    MANIFEST_OUT = Path(args.manifest_out)
+
     t_start = time.time()
 
     with open(MANIFEST_IN) as f:
@@ -46,7 +58,7 @@ def main():
     for vid in by_video:
         by_video[vid].sort(key=lambda r: r["frequency_path"])  # zero-padded frame idx -> correct temporal order
 
-    model = load_frozen_encoder()
+    model = load_frozen_encoder(args.checkpoint)
 
     out_rows = []
     with torch.no_grad():

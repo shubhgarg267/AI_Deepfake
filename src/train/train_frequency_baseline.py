@@ -56,7 +56,12 @@ def main():
     set_seed(cfg["train"]["seed"])
     device = torch.device(cfg["train"]["device"])
 
-    train_set = FrequencyFrameDataset(cfg["data"]["manifest"], cfg["data"]["train_split"])
+    train_set = FrequencyFrameDataset(
+        cfg["data"]["manifest"],
+        cfg["data"]["train_split"],
+        augment=cfg["data"].get("augment", False),
+        frames_dir=cfg["data"].get("frames_dir"),
+    )
     val_set = FrequencyFrameDataset(cfg["data"]["manifest"], cfg["data"]["val_split"])
     train_loader = DataLoader(
         train_set, batch_size=cfg["train"]["batch_size"], shuffle=True

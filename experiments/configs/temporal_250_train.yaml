@@ -1,0 +1,25 @@
+experiment: temporal_250_train
+
+data:
+  manifest: data/interim/manifest_temporal_250.csv
+  train_split: data/splits/spatial_250_train.csv   # same 200/50 split as spatial
+  val_split: data/splits/spatial_250_val.csv
+
+model:
+  backbone: temporal_bilstm
+  input_size: 512
+  hidden_size: 64
+  num_classes: 1
+
+train:
+  epochs: 10               # matches spatial_250_train's reasoning
+  batch_size: 16            # up from smoke test's 8: 200 train sequences now, not 40
+  optimizer: adam
+  lr: 1.0e-4
+  loss: bce_with_logits
+  seed: 42
+  device: cpu
+
+output:
+  checkpoint_dir: results/checkpoints/temporal_250_train/
+  log_dir: results/logs/temporal_250_train/
