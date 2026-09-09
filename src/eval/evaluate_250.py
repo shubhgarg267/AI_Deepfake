@@ -88,18 +88,18 @@ def eval_temporal():
     return compute_all(labels, probs), len(labels)
 
 
-def eval_fusion(fusion_type):
+def eval_fusion(fusion_type, checkpoint=None, manifest="data/interim/manifest_fusion_250.csv", return_raw=False):
     if fusion_type == "attention":
         model = AttentionFusion()
-        ckpt = "results/checkpoints/fusion_attention_250_train/fusion_attention_baseline_smoke_test.pt"
+        ckpt = checkpoint or "results/checkpoints/fusion_attention_250_train/fusion_attention_baseline_smoke_test.pt"
     else:
         model = ConcatFusion()
-        ckpt = "results/checkpoints/fusion_concat_250_train/fusion_concat_baseline_smoke_test.pt"
+        ckpt = checkpoint or "results/checkpoints/fusion_concat_250_train/fusion_concat_baseline_smoke_test.pt"
     state = torch.load(ckpt, map_location="cpu")
     model.load_state_dict(state)
     model.eval()
 
-    ds = FusionEmbeddingDataset("data/interim/manifest_fusion_250.csv", VAL_SPLIT)
+    ds = FusionEmbeddingDataset(manifest, VAL_SPLIT)
     loader = DataLoader(ds, batch_size=16, shuffle=False)
 
     labels, probs = [], []
@@ -108,6 +108,8 @@ def eval_fusion(fusion_type):
             logits = model(spatial, freq, temporal).squeeze(1)
             probs.extend(torch.sigmoid(logits).tolist())
             labels.extend(y.tolist())
+    if return_raw:
+        return labels, probs
     return compute_all(labels, probs), len(labels)
 
 

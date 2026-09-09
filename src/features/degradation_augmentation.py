@@ -66,11 +66,12 @@ def apply_downscale_upscale(img: Image.Image, factor: float) -> Image.Image:
     return small.resize((w, h), Image.BILINEAR)
 
 
-def apply_motion_blur(img: Image.Image, kernel_size: int) -> Image.Image:
+def apply_motion_blur(img: Image.Image, kernel_size: int, angle: float = None) -> Image.Image:
     arr = np.asarray(img.convert("RGB"))
     kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
     kernel[(kernel_size - 1) // 2, :] = 1.0
-    angle = random.uniform(0, 360)
+    if angle is None:
+        angle = random.uniform(0, 360)
     center = (kernel_size / 2 - 0.5, kernel_size / 2 - 0.5)
     M = cv2.getRotationMatrix2D(center, angle, 1.0)
     kernel = cv2.warpAffine(kernel, M, (kernel_size, kernel_size))
@@ -146,6 +147,25 @@ def degrade(img: Image.Image, rng: random.Random = None):
         del prev
 
     return out, {"tier": tier, "types": types}
+
+
+def degrade_fixed_tier(img: Image.Image, tier: str) -> Image.Image:
+    """Deterministic, single fixed pass for per-tier evaluation: applies all
+    5 degradation types (fixed order) at the tier's midpoint parameters, no
+    random sampling of type/severity/angle. tier='clean' returns img unchanged."""
+    if tier == "clean":
+        return img.copy()
+
+    p = TIER_RANGES[tier]
+    out = img
+    out = apply_jpeg(out, int(round((p["jpeg_quality"][0] + p["jpeg_quality"][1]) / 2)))
+    out = apply_h264(out, int(round((p["h264_crf"][0] + p["h264_crf"][1]) / 2)))
+    out = apply_gaussian_noise(out, (p["noise_sigma"][0] + p["noise_sigma"][1]) / 2)
+    out = apply_downscale_upscale(out, (p["downscale_factor"][0] + p["downscale_factor"][1]) / 2)
+    k = int(round((p["blur_kernel"][0] + p["blur_kernel"][1]) / 2))
+    k = k if k % 2 == 1 else k + 1
+    out = apply_motion_blur(out, k, angle=45.0)
+    return out
 
 
 def compute_psnr(clean: np.ndarray, degraded: np.ndarray) -> float:
