@@ -104,6 +104,15 @@ Sources:
   evidence attention is better** — it's one run, one seed, 40 training
   examples. Worth re-checking once there's a real dataset and multiple seeds
   behind the comparison; not a result to cite as-is.
+- **First real-training result (250-clip set, see `docs/results.md`)**: on
+  the held-out 50-video validation split, attention (84.0% accuracy, 0.8333
+  F1, 0.8752 AUC) and concat (84.0% accuracy, 0.8333 F1, 0.8704 AUC) are
+  again statistically indistinguishable — identical accuracy/F1, attention
+  ahead by only 0.005 AUC. Same conclusion as the smoke test, now on real
+  (if still small, n=50) data: **still no evidence attention fusion beats
+  naive concatenation** — one run, one seed, 200 training videos. This
+  needs multiple seeds and a larger validation set before it can support
+  the paper's core claim either way.
 
 ### 3. Degradation-aware augmentation strategy
 
@@ -157,15 +166,18 @@ Sources:
 | `docs/contribution-notes.md` | done (draft, this file) |
 | Local dataset subset (50-video DFD, see `docs/dataset.md`) | done — note: plan originally scoped DFDC, actually used DFD after access friction, see `docs/dataset.md` |
 | Face detection/cropping pipeline | done — smoke-tested, 97% detection success rate |
-| Spatial stream | smoke-tested, verified end-to-end on real data — not production-trained |
-| Frequency stream | smoke-tested, verified end-to-end on real data — not production-trained |
-| Temporal stream | smoke-tested, verified end-to-end on real data — not production-trained |
-| Attention fusion module | smoke-tested (both attention and concat-baseline variants) — not production-trained |
-| Degradation-aware augmentation | not started |
+| Spatial stream | trained on 250-clip set (200/50 split, 10 epochs, CPU) — see `docs/results.md`. Directional result, not GPU-scale final training. |
+| Frequency stream | trained on 250-clip set — weakest performer, converges slowly under augmentation, see caveats in `docs/results.md` |
+| Temporal stream | trained on 250-clip set — strongest single-stream result so far, see `docs/results.md` |
+| Attention fusion module | trained on 250-clip set (both attention and concat-baseline variants) — does not yet show attention beating concat by a meaningful margin, see `docs/results.md` |
+| Degradation-aware augmentation | done — 5 degradation types, mild/medium/heavy tiers, verified via visual QA + PSNR/SSIM spread check (see `docs/degradation_qa` outputs), used in the 250-clip training run above |
 | Cross-dataset (Celeb-DF-v2) eval | not started |
 
-"Smoke-tested" means: real data flows through the component end-to-end, loss
-decreases, checkpoints save/reload correctly — pipeline-correctness verification
-on a tiny (50-video) overfit-prone split. It is **not** a claim of accuracy,
-generalization, or GPU-scale training. This table should keep being updated
+Prior rows said "smoke-tested" (pipeline-correctness only, on a 50-video
+overfit-prone split, no accuracy claim). These now reflect the first real
+training pass on the 250-video training-phase subset — still a small local
+CPU run, not GPU-scale final training, but a genuine (if early and
+directional) accuracy/F1/AUC result rather than a wiring check. See
+`docs/results.md` for the full table and honest caveats about what these
+numbers do and don't support yet. This table should keep being updated
 honestly as each piece actually changes state — not marked "done" on intent.
