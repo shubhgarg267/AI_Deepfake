@@ -28,3 +28,8 @@ imageio==2.37.4
 
 # dataset acquisition (Kaggle API), not a training-time dependency
 kaggle==2.2.4
+
+# web UI (src/app/streamlit_app.py) -- verified working with numpy==1.26.4
+# above despite not needing an explicit pin for it
+streamlit==1.61.1
+pandas==3.0.5
