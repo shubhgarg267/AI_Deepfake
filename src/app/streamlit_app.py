@@ -4,6 +4,7 @@ face-detection health, with guardrails against showing an over-confident
 answer built on too little face data.
 
 Run with: streamlit run src/app/streamlit_app.py
+python -m streamlit run src/app/streamlit_app.py
 """
 import os
 import sys
